@@ -6,6 +6,7 @@
       :lineNum="ln"
       :board="board"
       @click="clickStone"
+      :disabled="disabled"
     ></board-line>
   </div>
 </template>
@@ -19,16 +20,17 @@ export default {
     return {
       board: [],
       lns: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+      disabled:false,
     };
   },
   created: function () {
     for (let i = 0; i < 81; i++) {
-      this.board.push({ disabled: false, color: "blue" });
+      this.board.push({color: "red" });
     }
   },
   methods: {
     clickStone: function (event) {
-      window.alert("hi from stone "+event);
+      this.board.splice(event,1,{color: "blue"})
     },
   },
 };

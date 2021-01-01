@@ -4,9 +4,9 @@
       v-for="id in ids"
       :key="id"
       :id="id"
-      :color="'blue'"
+      :color="board[id].color"
       @click="click"
-      :disabled="false"
+      :disabled="disabled"
     ></stone>
   </div>
 </template>
@@ -23,6 +23,7 @@ export default {
   props: {
     board: Array,
     lineNum: Number,
+    disabled: Boolean
   },
   created: function () {
     for (let i = 0; i < 9; i++) {
