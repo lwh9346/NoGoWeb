@@ -4,6 +4,7 @@ package main
 
 /*
 #cgo LDFLAGS: -lm
+//#cgo LDFLAGS: -lm
 #pragma GCC optimize(3)
 #include <malloc.h>
 #include <math.h>
@@ -243,7 +244,6 @@ struct TreeNode {
     int childrenCountMax;
     double q; //位于+-n之间的实数
     int n;
-    int *totalN;
     struct ValidPositionResult res;
 };
 //新建树节点
@@ -253,7 +253,6 @@ struct TreeNode *createNewTreeNode(struct TreeNode *parent, int action) {
     t->n = 0;
     t->parent = parent;
     t->childrenCount = 0;
-    t->totalN = parent->totalN;
     for (int i = 0; i < 81; i++) {
         t->board[i] = -parent->board[i];
     }
@@ -271,13 +270,12 @@ struct TreeNode *createNewTreeNode(struct TreeNode *parent, int action) {
 //创建根节点
 //棋盘不需要反转
 //totalN是计数器
-struct TreeNode *createRootTreeNode(signed char board[81], int *totalN) {
+struct TreeNode *createRootTreeNode(signed char board[81]) {
     struct TreeNode *t = malloc(sizeof(struct TreeNode));
     t->q = 0.0;
     t->n = 0;
     t->parent = NULL;
     t->childrenCount = 0;
-    t->totalN = totalN;
     for (int i = 0; i < 81; i++) {
         t->board[i] = board[i];
     }
@@ -303,8 +301,9 @@ struct TreeNode *treePolicy(struct TreeNode *t) {
     }
     double maxScore = -1.0;
     int maxI = 0;
+    double logN = log2(t->n);
     for (int i = 0; i < t->childrenCount; i++) {
-        double s = t->children[i]->q / (double)(t->children[i]->n) + 0.2 * sqrt(log((double)(*t->totalN)) / (double)(t->children[i]->n)); //UCT公式
+        double s = t->children[i]->q / (double)(t->children[i]->n) + 0.2 * sqrt(logN / (double)(t->children[i]->n)); //UCT公式
         if (s > maxScore) {
             maxScore = s;
             maxI = i;
@@ -350,23 +349,19 @@ struct DebugData {
 //获取当前棋盘下的最佳行动
 //输入的棋盘不需要正反方反转，但是需要xy反转(不然调试的时候很难受)
 //+1是己方，0是空格，-1是对方
-//时限单位为秒，超过时限后才会停止
+//应输入最大步数
 //debug是调试信息，在外部新建一个对象后传指针进来即可
 //如果不需要调试信息的话，可以传nullptr进来
 //该函数执行完毕后会自动释放内存
 //返回值为x*9+y
-int GetBestAction(signed char board[81], double timeOut, struct DebugData *debug) {
+int GetBestAction(signed char board[81], int maxSteps, struct DebugData *debug) {
     int totalN = 0;
-    int end = (int)(timeOut * (double)(CLOCKS_PER_SEC)) + clock();
-    struct TreeNode *root = createRootTreeNode(board, &totalN);
-    while (clock() < end) {
-        //为了减少获取时间的性能开销，执行16步以后再获取时间
-        for (int i = 0; i < 16; i++) {
-            totalN++;
-            struct TreeNode *t = treePolicy(root);
-            double delta = defaultPolicy(t);
-            backup(delta, t);
-        }
+    struct TreeNode *root = createRootTreeNode(board);
+    while (totalN < maxSteps) {
+        totalN++;
+        struct TreeNode *t = treePolicy(root);
+        double delta = defaultPolicy(t);
+        backup(delta, t);
     }
     int maxN = root->children[0]->n;
     int maxI = 0;
@@ -381,7 +376,7 @@ int GetBestAction(signed char board[81], double timeOut, struct DebugData *debug
         debug->nodeCount = totalN;
         debug->winningRate = (root->children[maxI]->q / (double)(root->children[maxI]->n) + 1) * 0.5;
     }
-	deleteTree(root);
+    deleteTree(root);
     return bestAction;
 }
 */
@@ -395,12 +390,12 @@ import "C"
 //如果不需要调试信息的话，可以传nullptr进来
 //该函数执行完毕后会自动释放内存
 //返回值为x*9+y
-func GoGetBestAction(board []int, timeout float64) (x int, y int) {
+func GoGetBestAction(board []int, maxStep int) (x int, y int) {
 	var arr [81]C.schar
 	for i := 0; i < 81; i++ {
 		arr[i] = C.schar(board[i])
 	}
-	action := C.GetBestAction(&arr[0], C.double(timeout), nil)
+	action := C.GetBestAction(&arr[0], C.int(maxStep), nil)
 	actionInt := int(action)
 	x = actionInt / 9
 	y = actionInt % 9

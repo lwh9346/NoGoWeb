@@ -51,14 +51,14 @@ func handleNoGoRequest(c *gin.Context) {
 			return
 		}
 	}
-	var timeout float64
+	var maxStep int
 	switch req.Difficulty {
 	case "easy":
-		timeout = 0.5
+		maxStep = 20000
 	case "normal":
-		timeout = 1.0
+		maxStep = 100000
 	case "hard":
-		timeout = 2.0
+		maxStep = 200000
 	default:
 		c.JSON(400, gin.H{"msg": "不存在的难度"})
 	}
@@ -79,7 +79,7 @@ func handleNoGoRequest(c *gin.Context) {
 		freeThread()
 		return
 	}
-	x, y := GoGetBestAction(board, timeout)
+	x, y := GoGetBestAction(board, maxStep)
 	board[x*9+y] = 1
 	res = GoGetValidPosition(board)
 	resp.X = x
