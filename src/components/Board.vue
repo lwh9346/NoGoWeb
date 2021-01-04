@@ -9,6 +9,8 @@
       :disabled="false"
     ></board-line>
     <v-chip style="margin-top: 10px" :color="chipColor">{{ message }}</v-chip>
+    <v-spacer></v-spacer>
+    <v-chip style="margin-top: 10px" @click="changeDifficulty">{{difficultyMessage[difficulty]}}</v-chip>
     <v-dialog v-model="dialog" max-width="300"
       ><v-card max-width="300">
         <v-card-title>{{ winnerDialogData.title }}</v-card-title>
@@ -63,6 +65,8 @@ export default {
       color: colors,
       chipColor: chipColors.playerRound,
       computerFirst: false, //计算机执黑
+      difficulty: "easy",
+      difficultyMessage:{"easy":"简单","normal":"普通","hard":"困难"}
     };
   },
   created: function () {
@@ -90,7 +94,7 @@ export default {
         color: stoneColors.player,
       });
       this.message = messages.computerRound;
-      let req = { board: [], difficulty: "easy" };
+      let req = { board: [], difficulty: this.difficulty };
       for (let index = 0; index < this.board.length; index++) {
         const e = this.board[index];
         req.board.push(e.state);
@@ -178,6 +182,21 @@ export default {
         color: stoneColors.computer,
       });
     },
+    changeDifficulty:function(){
+      switch (this.difficulty) {
+        case "easy":
+          this.difficulty="normal"
+          break;
+        case "normal":
+          this.difficulty="hard"
+          break;
+        case "hard":
+          this.difficulty="easy"
+          break;
+        default:
+          break;
+      }
+    }
   },
 };
 </script>

@@ -58,6 +58,11 @@
       <board ref="gameboard"></board>
       <helper @click="helperShow()" :value="helper"></helper>
     </v-main>
+    <v-footer
+      ><v-row dense>
+        <v-col>https://github.com/lwh9346/NoGoWeb</v-col>
+      </v-row></v-footer
+    >
   </v-app>
 </template>
 
@@ -71,15 +76,15 @@ export default {
 
   data: () => ({
     drawer: false,
-    helper: false,
+    helper: true,
   }),
   methods: {
     helperShow: function () {
       this.helper = !this.helper;
     },
   },
-  mounted:function(){
-    document.title="NoGo Web"
-  }
+  mounted: function () {
+    document.title = "NoGo Web";
+  },
 };
 </script>
