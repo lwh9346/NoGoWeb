@@ -51,11 +51,11 @@ func handleNoGoRequest(c *gin.Context) {
 	var maxStep int
 	switch req.Difficulty {
 	case "easy":
-		maxStep = 2000
+		maxStep = 20000
 	case "normal":
-		maxStep = 4000
+		maxStep = 40000
 	case "hard":
-		maxStep = 8000
+		maxStep = 80000
 	default:
 		c.JSON(400, gin.H{"msg": "不存在的难度"})
 	}
