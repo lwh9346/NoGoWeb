@@ -1,20 +1,17 @@
 package main
 
 import (
-	"errors"
 	"log"
-	"sync"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 var (
-	threads int
-	lock    sync.Mutex
+	limitor chan int
 )
 
 func main() {
+	limitor = make(chan int, 2)
 	r := gin.Default()
 	r.POST("/api/nogo", handleNoGoRequest)
 	r.Static("/", "./ui")
@@ -54,29 +51,26 @@ func handleNoGoRequest(c *gin.Context) {
 	var maxStep int
 	switch req.Difficulty {
 	case "easy":
-		maxStep = 20000
+		maxStep = 2000
 	case "normal":
-		maxStep = 100000
+		maxStep = 4000
 	case "hard":
-		maxStep = 200000
+		maxStep = 8000
 	default:
 		c.JSON(400, gin.H{"msg": "不存在的难度"})
-	}
-	if err := waitForFree(); err != nil {
-		c.JSON(503, gin.H{"msg": "服务器过载"})
-		return
 	}
 	//读取棋盘，这里需要翻转一下
 	board := make([]int, 81)
 	for i := 0; i < 81; i++ {
 		board[i] = -req.Board[i]
 	}
+	limitor <- 0
+	defer func() { <-limitor }()
 	var resp nogoResponse
 	res := GoGetValidPosition(board)
 	if res.numS == 0 {
 		resp.Winner = "player"
 		c.JSON(200, resp)
-		freeThread()
 		return
 	}
 	x, y := GoGetBestAction(board, maxStep)
@@ -91,31 +85,4 @@ func handleNoGoRequest(c *gin.Context) {
 		resp.Winner = "none"
 	}
 	c.JSON(200, resp)
-	freeThread()
-}
-
-func waitForFree() error {
-	count := 0
-	for true {
-		lock.Lock()
-		if threads > 2 {
-			lock.Unlock()
-			count++
-			time.Sleep(100 * time.Millisecond)
-		} else {
-			threads++
-			lock.Unlock()
-			break
-		}
-		if count > 30 {
-			return errors.New("TimeOut")
-		}
-	}
-	return nil
-}
-
-func freeThread() {
-	lock.Lock()
-	threads--
-	lock.Unlock()
 }
